@@ -184,16 +184,21 @@ Premium|广港|IEPL|05                        	3.87MB/s    	249.00ms
 - `403 Forbidden`：token 权限不足，或目标分支启用了保护策略（可能禁止直接 push/commit）。
 - `404 Not Found`：仓库地址/路径/分支不正确，或 token 对该仓库不可见。
 
-> 安全建议：不要把 token 提交到仓库；优先通过环境变量或 CI Secret 注入。
+> 安全建议：不要把 token 提交到仓库；token 建议只通过 CI Secret（例如 GitHub Actions Secrets）注入。
 
 ## GitHub Actions 定时测速（可选）
 
 仓库内已提供 GitHub Actions Workflow：`.github/workflows/speedtest.yml`，支持定时触发与手动触发。
 
-需要在仓库 `Settings` → `Secrets and variables` → `Actions` 配置 Secret：
-- `CLASH_SPEEDTEST_CONFIG`：Clash/Mihomo 配置 URL（订阅地址）或原始 YAML URL（建议订阅地址包含 `flag=meta`）。
-- `CLASH_SPEEDTEST_GIST_TOKEN`、`CLASH_SPEEDTEST_GIST_ADDRESS`：可选，用于将 `-output` 生成的文件同步到 Gist。
-- `CLASH_SPEEDTEST_REPO_TOKEN`、`CLASH_SPEEDTEST_REPO_ADDRESS`、`CLASH_SPEEDTEST_REPO_FILE_PATH`、`CLASH_SPEEDTEST_REPO_BRANCH`：可选，用于将 `-output` 生成的文件同步到指定仓库文件。
+Workflow 支持通过 **触发参数（workflow_dispatch inputs）** 覆盖部分配置，并将参数直接作为命令行参数传给 `clash-speedtest`（不依赖环境变量）。
+
+需要在仓库 `Settings` → `Secrets and variables` → `Actions` 配置 Secrets（定时触发时也会用到）：
+- `CLASH_SPEEDTEST_CONFIG`：必需。Clash/Mihomo 配置 URL（订阅地址）或原始 YAML URL（建议订阅地址包含 `flag=meta`）。手动触发时也可用 `config` input 覆盖。
+- `CLASH_SPEEDTEST_GIST_TOKEN`：可选。用于将 `-output` 生成的文件同步到 Gist。
+- `CLASH_SPEEDTEST_GIST_ADDRESS`：可选。手动触发时也可用 `gist_address` input 覆盖。
+- `CLASH_SPEEDTEST_REPO_TOKEN`：可选。用于将 `-output` 生成的文件同步到指定仓库文件。
+- `CLASH_SPEEDTEST_REPO_ADDRESS`：可选。手动触发时也可用 `repo_address` input 覆盖。
+- `CLASH_SPEEDTEST_REPO_FILE_PATH`、`CLASH_SPEEDTEST_REPO_BRANCH`：可选。手动触发时也可用 `repo_file_path` / `repo_branch` inputs 覆盖。
 
 Workflow 默认会生成并上传 artifact：
 - `result.tsv`：测速结果表格输出（TSV）。

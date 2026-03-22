@@ -5,6 +5,22 @@ on:
     # Note: GitHub Actions schedule uses UTC.
     - cron: "0 1 * * *"
   workflow_dispatch:
+    inputs:
+      config:
+        description: "Optional. Override secret CLASH_SPEEDTEST_CONFIG (config/subscription URL)."
+        required: false
+      gist_address:
+        description: "Optional. Override secret CLASH_SPEEDTEST_GIST_ADDRESS (Gist address or id)."
+        required: false
+      repo_address:
+        description: "Optional. Override secret CLASH_SPEEDTEST_REPO_ADDRESS (owner/repo or full repo address)."
+        required: false
+      repo_file_path:
+        description: "Optional. Override secret CLASH_SPEEDTEST_REPO_FILE_PATH (repo file path)."
+        required: false
+      repo_branch:
+        description: "Optional. Override secret CLASH_SPEEDTEST_REPO_BRANCH (repo branch)."
+        required: false
 
 permissions:
   contents: read
@@ -30,49 +46,57 @@ jobs:
 
       - name: Run clash-speedtest
         shell: bash
-        env:
-          # Required: Clash/Mihomo config URL (subscription) or raw YAML URL.
-          # Recommended to include `flag=meta` in subscription URL.
-          CLASH_SPEEDTEST_CONFIG: ${{ secrets.CLASH_SPEEDTEST_CONFIG }}
-
-          # Optional: upload output file to a GitHub Gist.
-          CLASH_SPEEDTEST_GIST_TOKEN: ${{ secrets.CLASH_SPEEDTEST_GIST_TOKEN }}
-          CLASH_SPEEDTEST_GIST_ADDRESS: ${{ secrets.CLASH_SPEEDTEST_GIST_ADDRESS }}
-
-          # Optional: upload output file to a GitHub repository file via API.
-          CLASH_SPEEDTEST_REPO_TOKEN: ${{ secrets.CLASH_SPEEDTEST_REPO_TOKEN }}
-          CLASH_SPEEDTEST_REPO_ADDRESS: ${{ secrets.CLASH_SPEEDTEST_REPO_ADDRESS }}
-          CLASH_SPEEDTEST_REPO_FILE_PATH: ${{ secrets.CLASH_SPEEDTEST_REPO_FILE_PATH }}
-          CLASH_SPEEDTEST_REPO_BRANCH: ${{ secrets.CLASH_SPEEDTEST_REPO_BRANCH }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${CLASH_SPEEDTEST_CONFIG:-}" ]]; then
-            echo "Missing required secret: CLASH_SPEEDTEST_CONFIG" >&2
+          config_input="${{ github.event.inputs.config }}"
+          config_secret="${{ secrets.CLASH_SPEEDTEST_CONFIG }}"
+          config="${config_input:-$config_secret}"
+
+          if [[ -z "${config}" ]]; then
+            echo "Missing required: workflow_dispatch input 'config' or secret CLASH_SPEEDTEST_CONFIG" >&2
             exit 1
           fi
+
+          gist_token="${{ secrets.CLASH_SPEEDTEST_GIST_TOKEN }}"
+          gist_address_input="${{ github.event.inputs.gist_address }}"
+          gist_address_secret="${{ secrets.CLASH_SPEEDTEST_GIST_ADDRESS }}"
+          gist_address="${gist_address_input:-$gist_address_secret}"
+
+          repo_token="${{ secrets.CLASH_SPEEDTEST_REPO_TOKEN }}"
+          repo_address_input="${{ github.event.inputs.repo_address }}"
+          repo_address_secret="${{ secrets.CLASH_SPEEDTEST_REPO_ADDRESS }}"
+          repo_address="${repo_address_input:-$repo_address_secret}"
+
+          repo_file_path_input="${{ github.event.inputs.repo_file_path }}"
+          repo_file_path_secret="${{ secrets.CLASH_SPEEDTEST_REPO_FILE_PATH }}"
+          repo_file_path="${repo_file_path_input:-$repo_file_path_secret}"
+
+          repo_branch_input="${{ github.event.inputs.repo_branch }}"
+          repo_branch_secret="${{ secrets.CLASH_SPEEDTEST_REPO_BRANCH }}"
+          repo_branch="${repo_branch_input:-$repo_branch_secret}"
 
           out_yaml="result.yaml"
           out_tsv="result.tsv"
 
           args=(
-            -c "${CLASH_SPEEDTEST_CONFIG}"
+            -c "${config}"
             -output "${out_yaml}"
           )
 
-          if [[ -n "${CLASH_SPEEDTEST_GIST_TOKEN:-}" && -n "${CLASH_SPEEDTEST_GIST_ADDRESS:-}" ]]; then
-            args+=(-gist-token "${CLASH_SPEEDTEST_GIST_TOKEN}" -gist-address "${CLASH_SPEEDTEST_GIST_ADDRESS}")
+          if [[ -n "${gist_token}" && -n "${gist_address}" ]]; then
+            args+=(-gist-token "${gist_token}" -gist-address "${gist_address}")
           fi
 
-          if [[ -n "${CLASH_SPEEDTEST_REPO_TOKEN:-}" && -n "${CLASH_SPEEDTEST_REPO_ADDRESS:-}" ]]; then
-            args+=(-repo-token "${CLASH_SPEEDTEST_REPO_TOKEN}" -repo-address "${CLASH_SPEEDTEST_REPO_ADDRESS}")
+          if [[ -n "${repo_token}" && -n "${repo_address}" ]]; then
+            args+=(-repo-token "${repo_token}" -repo-address "${repo_address}")
 
-            if [[ -n "${CLASH_SPEEDTEST_REPO_FILE_PATH:-}" ]]; then
-              args+=(-repo-file-path "${CLASH_SPEEDTEST_REPO_FILE_PATH}")
+            if [[ -n "${repo_file_path}" ]]; then
+              args+=(-repo-file-path "${repo_file_path}")
             fi
 
-            if [[ -n "${CLASH_SPEEDTEST_REPO_BRANCH:-}" ]]; then
-              args+=(-repo-branch "${CLASH_SPEEDTEST_REPO_BRANCH}")
+            if [[ -n "${repo_branch}" ]]; then
+              args+=(-repo-branch "${repo_branch}")
             fi
           fi
 

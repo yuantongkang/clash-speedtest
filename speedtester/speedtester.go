@@ -49,7 +49,9 @@ const (
 
 // defaultFetchConfigUA returns the default User-Agent (mihomo kernel format) when none is set.
 func defaultFetchConfigUA() string {
-	return constant.MihomoName + "/" + constant.Version
+	// Some subscription providers return different formats based on UA.
+	// Default to Clash for better compatibility; callers can override via -ua.
+	return "Clash"
 }
 
 func (st *SpeedTester) fetchConfigUA() string {

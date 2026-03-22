@@ -50,7 +50,7 @@ var (
 	renameTemplate    = flag.String("rename-template", "", "name template for renaming (Go text/template). Placeholders: {{.Flag}}, {{.CountryCode}}, {{.Index}}, {{.Direction}}, {{.Speed}}, {{.SpeedUnit}}, {{.LatencyMs}}, {{.DownloadSpeedMBps}}, {{.UploadSpeedMBps}}. Empty = default format")
 	fastMode          = flag.Bool("fast", false, "fast mode (alias for --speed-mode fast)")
 	versionFlag       = flag.Bool("v", false, "show version information")
-	userAgent         = flag.String("ua", "", "User-Agent for fetching config from http(s) URL (default: mihomo kernel UA, e.g. mihomo/1.10.0)")
+	userAgent         = flag.String("ua", "", "User-Agent for fetching config from http(s) URL (default: Clash)")
 )
 
 func main() {

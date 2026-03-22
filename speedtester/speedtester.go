@@ -37,7 +37,7 @@ type Config struct {
 	MinUploadSpeed   float64
 	Mode             SpeedMode
 	OutputPath       string
-	UserAgent        string // optional; empty means use default (mihomo kernel UA)
+	UserAgent        string // optional; empty means use default (Clash)
 }
 
 type serverMode int
@@ -47,7 +47,7 @@ const (
 	serverModeDirectDownload
 )
 
-// defaultFetchConfigUA returns the default User-Agent (mihomo kernel format) when none is set.
+// defaultFetchConfigUA returns the default User-Agent when none is set.
 func defaultFetchConfigUA() string {
 	// Some subscription providers return different formats based on UA.
 	// Default to Clash for better compatibility; callers can override via -ua.

@@ -29,7 +29,7 @@ var (
 	configPathsConfig = flag.String("c", "", "config file path, also support http(s) url")
 	filterRegexConfig = flag.String("f", ".+", "filter proxies by name, use regexp")
 	blockKeywords     = flag.String("b", "", "block proxies by keywords, use | to separate multiple keywords (example: -b 'rate|x1|1x')")
-	serverURL         = flag.String("server-url", "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg", "server url or direct download url")
+	serverURL         = flag.String("server-url", "https://speed.cloudflare.com", "server url or direct download url")
 	speedMode         = flag.String("speed-mode", "download", "speed test mode: fast, download, full")
 	downloadSize      = flag.Int("download-size", 50*1024*1024, "download size for testing proxies")
 	uploadSize        = flag.Int("upload-size", 20*1024*1024, "upload size for testing proxies (full mode only)")
@@ -69,12 +69,12 @@ func main() {
 
 	var err error
 	requestedMode := speedtester.SpeedModeFast
-		if !*fastMode {
-			requestedMode, err = speedtester.ParseSpeedMode(*speedMode)
-			if err != nil {
-				log.Fatalf("parse speed mode failed: %v", err)
-			}
+	if !*fastMode {
+		requestedMode, err = speedtester.ParseSpeedMode(*speedMode)
+		if err != nil {
+			log.Fatalf("parse speed mode failed: %v", err)
 		}
+	}
 
 	speedTester, err := speedtester.New(&speedtester.Config{
 		ConfigPaths:      *configPathsConfig,
@@ -92,27 +92,27 @@ func main() {
 		Mode:             requestedMode,
 		OutputPath:       *outputPath,
 		UserAgent:        *userAgent,
-		})
-		if err != nil {
-			log.Fatalf("create speed tester failed: %v", err)
-		}
-		effectiveMode := speedTester.Mode()
+	})
+	if err != nil {
+		log.Fatalf("create speed tester failed: %v", err)
+	}
+	effectiveMode := speedTester.Mode()
 
-		allProxies, err := speedTester.LoadProxies()
-		if err != nil {
-			log.Fatalf("load proxies failed: %v", err)
-		}
+	allProxies, err := speedTester.LoadProxies()
+	if err != nil {
+		log.Fatalf("load proxies failed: %v", err)
+	}
 
 	outputMode := output.DetermineOutputMode(output.IsTerminalFile)
 
 	var tsvWriter *output.TSVWriter
 	if outputMode == output.OutputModeTSV {
 		var err error
-			tsvWriter, err = output.NewTSVWriter(os.Stdout, effectiveMode)
-			if err != nil {
-				log.Fatalf("create TSV writer failed: %v", err)
-			}
+		tsvWriter, err = output.NewTSVWriter(os.Stdout, effectiveMode)
+		if err != nil {
+			log.Fatalf("create TSV writer failed: %v", err)
 		}
+	}
 
 	results := make([]*speedtester.Result, 0, len(allProxies))
 
@@ -149,19 +149,19 @@ func main() {
 			tui.NewTUIModel(effectiveMode, len(allProxies), resultChannel),
 			tea.WithAltScreen(),
 			tea.WithMouseAllMotion(),
-			)
-			if _, err := p.Run(); err != nil {
-				log.Fatalf("TUI failed: %v", err)
-			}
+		)
+		if _, err := p.Run(); err != nil {
+			log.Fatalf("TUI failed: %v", err)
+		}
 
 		if !collectResults {
 			return
 		}
 
-			err = <-saveResult
-			if err != nil {
-				log.Fatalf("save config file failed: %v", err)
-			}
+		err = <-saveResult
+		if err != nil {
+			log.Fatalf("save config file failed: %v", err)
+		}
 		fmt.Printf("\nsave config file to: %s\n", *outputPath)
 		return
 	}
@@ -179,14 +179,14 @@ func main() {
 
 	results = output.SortResults(results, effectiveMode)
 
-		if *outputPath != "" {
-			err = saveConfig(results, effectiveMode)
-			if err != nil {
-				log.Fatalf("save config file failed: %v", err)
-			}
-			fmt.Printf("\nsave config file to: %s\n", *outputPath)
+	if *outputPath != "" {
+		err = saveConfig(results, effectiveMode)
+		if err != nil {
+			log.Fatalf("save config file failed: %v", err)
 		}
+		fmt.Printf("\nsave config file to: %s\n", *outputPath)
 	}
+}
 
 func saveConfig(results []*speedtester.Result, mode speedtester.SpeedMode) error {
 	proxies := make([]map[string]any, 0)

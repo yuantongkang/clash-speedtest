@@ -50,7 +50,7 @@ Usage of clash-speedtest:
   -b string
         block proxies by keywords, use | to separate multiple keywords (example: -b 'rate|x1|1x')
   -server-url string
-        server url or direct download url (default "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg")
+        server url or direct download url (default "https://speed.cloudflare.com")
   -speed-mode string
         speed test mode: fast, download, full (default "download")
   -download-size int
@@ -206,7 +206,7 @@ Workflow 默认会生成并上传 artifact：
 
 ## 测速原理
 
-通过 HTTP GET 请求下载指定大小的文件，默认使用 https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg 进行测试，计算下载时间得到下载速度。因为 speed.cloudflare.com 容易返回 403，所以默认不再使用它作为测速入口。
+通过 HTTP GET 请求下载指定大小的文件，默认使用 https://speed.cloudflare.com 进行测试，计算下载时间得到下载速度。如果你遇到 403 或网络不可达，可自行指定一个直链下载地址或使用自建测速服务。
 
 当 server-url 不带 path 时 (使用 https://speed.cloudflare.com 或自建测速服务)，使用 /__down 和 /__up 完成下载与上传测试。
 当 server-url 带 path 时，会被识别为直接下载地址，只进行下载测速。

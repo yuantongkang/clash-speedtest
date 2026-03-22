@@ -69,12 +69,12 @@ func main() {
 
 	var err error
 	requestedMode := speedtester.SpeedModeFast
-	if !*fastMode {
-		requestedMode, err = speedtester.ParseSpeedMode(*speedMode)
-		if err != nil {
-			log.Fatalln("parse speed mode failed: %s", err)
+		if !*fastMode {
+			requestedMode, err = speedtester.ParseSpeedMode(*speedMode)
+			if err != nil {
+				log.Fatalf("parse speed mode failed: %v", err)
+			}
 		}
-	}
 
 	speedTester, err := speedtester.New(&speedtester.Config{
 		ConfigPaths:      *configPathsConfig,
@@ -92,27 +92,27 @@ func main() {
 		Mode:             requestedMode,
 		OutputPath:       *outputPath,
 		UserAgent:        *userAgent,
-	})
-	if err != nil {
-		log.Fatalln("create speed tester failed: %s", err)
-	}
-	effectiveMode := speedTester.Mode()
+		})
+		if err != nil {
+			log.Fatalf("create speed tester failed: %v", err)
+		}
+		effectiveMode := speedTester.Mode()
 
-	allProxies, err := speedTester.LoadProxies()
-	if err != nil {
-		log.Fatalln("load proxies failed: %s", err)
-	}
+		allProxies, err := speedTester.LoadProxies()
+		if err != nil {
+			log.Fatalf("load proxies failed: %v", err)
+		}
 
 	outputMode := output.DetermineOutputMode(output.IsTerminalFile)
 
 	var tsvWriter *output.TSVWriter
 	if outputMode == output.OutputModeTSV {
 		var err error
-		tsvWriter, err = output.NewTSVWriter(os.Stdout, effectiveMode)
-		if err != nil {
-			log.Fatalln("create TSV writer failed: %s", err)
+			tsvWriter, err = output.NewTSVWriter(os.Stdout, effectiveMode)
+			if err != nil {
+				log.Fatalf("create TSV writer failed: %v", err)
+			}
 		}
-	}
 
 	results := make([]*speedtester.Result, 0, len(allProxies))
 
@@ -149,19 +149,19 @@ func main() {
 			tui.NewTUIModel(effectiveMode, len(allProxies), resultChannel),
 			tea.WithAltScreen(),
 			tea.WithMouseAllMotion(),
-		)
-		if _, err := p.Run(); err != nil {
-			log.Fatalln("TUI failed: %s", err)
-		}
+			)
+			if _, err := p.Run(); err != nil {
+				log.Fatalf("TUI failed: %v", err)
+			}
 
 		if !collectResults {
 			return
 		}
 
-		err = <-saveResult
-		if err != nil {
-			log.Fatalln("save config file failed: %s", err)
-		}
+			err = <-saveResult
+			if err != nil {
+				log.Fatalf("save config file failed: %v", err)
+			}
 		fmt.Printf("\nsave config file to: %s\n", *outputPath)
 		return
 	}
@@ -179,14 +179,14 @@ func main() {
 
 	results = output.SortResults(results, effectiveMode)
 
-	if *outputPath != "" {
-		err = saveConfig(results, effectiveMode)
-		if err != nil {
-			log.Fatalln("save config file failed: %s", err)
+		if *outputPath != "" {
+			err = saveConfig(results, effectiveMode)
+			if err != nil {
+				log.Fatalf("save config file failed: %v", err)
+			}
+			fmt.Printf("\nsave config file to: %s\n", *outputPath)
 		}
-		fmt.Printf("\nsave config file to: %s\n", *outputPath)
 	}
-}
 
 func saveConfig(results []*speedtester.Result, mode speedtester.SpeedMode) error {
 	proxies := make([]map[string]any, 0)

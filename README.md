@@ -186,6 +186,19 @@ Premium|广港|IEPL|05                        	3.87MB/s    	249.00ms
 
 > 安全建议：不要把 token 提交到仓库；优先通过环境变量或 CI Secret 注入。
 
+## GitHub Actions 定时测速（可选）
+
+仓库内已提供 GitHub Actions Workflow：`.github/workflows/speedtest.yml`，支持定时触发与手动触发。
+
+需要在仓库 `Settings` → `Secrets and variables` → `Actions` 配置 Secret：
+- `CLASH_SPEEDTEST_CONFIG`：Clash/Mihomo 配置 URL（订阅地址）或原始 YAML URL（建议订阅地址包含 `flag=meta`）。
+- `CLASH_SPEEDTEST_GIST_TOKEN`、`CLASH_SPEEDTEST_GIST_ADDRESS`：可选，用于将 `-output` 生成的文件同步到 Gist。
+- `CLASH_SPEEDTEST_REPO_TOKEN`、`CLASH_SPEEDTEST_REPO_ADDRESS`、`CLASH_SPEEDTEST_REPO_FILE_PATH`、`CLASH_SPEEDTEST_REPO_BRANCH`：可选，用于将 `-output` 生成的文件同步到指定仓库文件。
+
+Workflow 默认会生成并上传 artifact：
+- `result.tsv`：测速结果表格输出（TSV）。
+- `result.yaml`：筛选后的配置文件（对应 `-output`）。
+
 ## 测速原理
 
 通过 HTTP GET 请求下载指定大小的文件，默认使用 https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg 进行测试，计算下载时间得到下载速度。因为 speed.cloudflare.com 容易返回 403，所以默认不再使用它作为测速入口。

@@ -1,0 +1,90 @@
+name: speedtest
+
+on:
+  schedule:
+    # Note: GitHub Actions schedule uses UTC.
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: speedtest
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run clash-speedtest
+        shell: bash
+        env:
+          # Required: Clash/Mihomo config URL (subscription) or raw YAML URL.
+          # Recommended to include `flag=meta` in subscription URL.
+          CLASH_SPEEDTEST_CONFIG: ${{ secrets.CLASH_SPEEDTEST_CONFIG }}
+
+          # Optional: upload output file to a GitHub Gist.
+          CLASH_SPEEDTEST_GIST_TOKEN: ${{ secrets.CLASH_SPEEDTEST_GIST_TOKEN }}
+          CLASH_SPEEDTEST_GIST_ADDRESS: ${{ secrets.CLASH_SPEEDTEST_GIST_ADDRESS }}
+
+          # Optional: upload output file to a GitHub repository file via API.
+          CLASH_SPEEDTEST_REPO_TOKEN: ${{ secrets.CLASH_SPEEDTEST_REPO_TOKEN }}
+          CLASH_SPEEDTEST_REPO_ADDRESS: ${{ secrets.CLASH_SPEEDTEST_REPO_ADDRESS }}
+          CLASH_SPEEDTEST_REPO_FILE_PATH: ${{ secrets.CLASH_SPEEDTEST_REPO_FILE_PATH }}
+          CLASH_SPEEDTEST_REPO_BRANCH: ${{ secrets.CLASH_SPEEDTEST_REPO_BRANCH }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CLASH_SPEEDTEST_CONFIG:-}" ]]; then
+            echo "Missing required secret: CLASH_SPEEDTEST_CONFIG" >&2
+            exit 1
+          fi
+
+          out_yaml="result.yaml"
+          out_tsv="result.tsv"
+
+          args=(
+            -c "${CLASH_SPEEDTEST_CONFIG}"
+            -output "${out_yaml}"
+          )
+
+          if [[ -n "${CLASH_SPEEDTEST_GIST_TOKEN:-}" && -n "${CLASH_SPEEDTEST_GIST_ADDRESS:-}" ]]; then
+            args+=(-gist-token "${CLASH_SPEEDTEST_GIST_TOKEN}" -gist-address "${CLASH_SPEEDTEST_GIST_ADDRESS}")
+          fi
+
+          if [[ -n "${CLASH_SPEEDTEST_REPO_TOKEN:-}" && -n "${CLASH_SPEEDTEST_REPO_ADDRESS:-}" ]]; then
+            args+=(-repo-token "${CLASH_SPEEDTEST_REPO_TOKEN}" -repo-address "${CLASH_SPEEDTEST_REPO_ADDRESS}")
+
+            if [[ -n "${CLASH_SPEEDTEST_REPO_FILE_PATH:-}" ]]; then
+              args+=(-repo-file-path "${CLASH_SPEEDTEST_REPO_FILE_PATH}")
+            fi
+
+            if [[ -n "${CLASH_SPEEDTEST_REPO_BRANCH:-}" ]]; then
+              args+=(-repo-branch "${CLASH_SPEEDTEST_REPO_BRANCH}")
+            fi
+          fi
+
+          # Pipe through tee to force non-interactive TSV output in CI.
+          go run . "${args[@]}" | tee "${out_tsv}"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedtest-result
+          path: |
+            result.yaml
+            result.tsv
+          if-no-files-found: warn

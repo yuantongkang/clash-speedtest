@@ -99,4 +99,7 @@ func TestNewEnablesUploadForDownloadServer(t *testing.T) {
 	if st.Mode() != SpeedModeFull {
 		t.Fatalf("expected mode to remain %s for download server url, got %s", SpeedModeFull, st.Mode())
 	}
+	if st.downloadURL != "https://example.com/__down?bytes=1" {
+		t.Fatalf("expected downloadURL to default to __down endpoint for download server, got %q", st.downloadURL)
+	}
 }

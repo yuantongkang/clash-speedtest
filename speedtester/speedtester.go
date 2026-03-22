@@ -107,6 +107,12 @@ func New(config *Config) (*SpeedTester, error) {
 	if err != nil {
 		return nil, err
 	}
+	// For download-server style base URLs (no path), use /__down for latency probing.
+	// This keeps latency tests working when server-url is https://speed.cloudflare.com or a self-hosted download-server.
+	downloadURL := target.downloadURL
+	if target.mode == serverModeDownloadServer {
+		downloadURL = fmt.Sprintf("%s/__down?bytes=1", target.baseURL)
+	}
 	if mode == SpeedModeFull && config.UploadSize <= 0 {
 		return nil, fmt.Errorf("upload size must be positive when speed mode is %s", mode)
 	}
@@ -118,7 +124,7 @@ func New(config *Config) (*SpeedTester, error) {
 		config:        config,
 		serverMode:    target.mode,
 		serverBaseURL: target.baseURL,
-		downloadURL:   target.downloadURL,
+		downloadURL:   downloadURL,
 		mode:          mode,
 	}, nil
 }
